@@ -1,0 +1,45 @@
+import datetime
+import os
+import numpy as np
+
+print("Ingrese el intervalo de interés utilizando el formato yyyymmdd")
+inicio = datetime.datetime.strptime(input("Inicio: "), "%Y%m%d")    
+fin = datetime.datetime.strptime(input("Fin: "), "%Y%m%d")
+while (fin-inicio).days > 185:
+    print("Actualmente solo soportamos busquedas menores a 184 días, por favor mofifique su busqueda.")
+    inicio = datetime.datetime.strptime(input("Inicio: "), "%Y%m%d")
+    fin = datetime.datetime.strptime(input("Fin: "), "%Y%m%d")
+dias = []
+lista = []
+for i in range(((fin-inicio).days)+1):
+    dias.append((inicio + datetime.timedelta(days=i)).strftime('%Y%m%d'))
+print("Desea alguna hora u horas en particular?")
+respuesta = input("S/N: ")
+while respuesta != 'S' and respuesta != 'N':
+    print("Por favor eliga Si o No")
+    respuesta = input("S/N: ")
+if respuesta == 'S':
+    print("Ingrese la hora ó intervalo de horas en formato hhmm")
+    horainicio = datetime.datetime.strptime(input("Inicio: "), "%H%M")
+    horafin = datetime.datetime.strptime(input("Fin: "), "%H%M")
+    horas = []
+    for h in range(len(dias)):
+        for j in range((horafin.hour-horainicio.hour)+1):
+            horas.append(dias[h] + (horainicio + datetime.timedelta(hours=j)).strftime('%H%M'))
+            for k in range(len(horas)):
+                dir_path = os.path.dirname(os.path.realpath(horas[k]))
+                for root, dirs, files in os.walk(dir_path):
+                    for file in files: 
+                        if file.startswith(horas[k]):
+                            lista.append((root+'/'+str(file))[-16:])
+    lista = list(set(lista))
+    lista = list(np.sort(lista))
+
+elif respuesta == 'N':
+    for l in range(len(dias)):
+        dir_path = os.path.dirname(os.path.realpath(dias[l]))
+        for root, dirs, files in os.walk(dir_path):
+            for file in files: 
+                if file.startswith(dias[l]):
+                    lista.append((root+'/'+str(file))[-16:])
+lista
