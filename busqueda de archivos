@@ -1,0 +1,65 @@
+import pandas as pd
+import numpy as np
+import xml.etree.ElementTree as ET
+from datetime import datetime
+import pyodbc
+import sqlalchemy
+from sqlalchemy import create_engine
+import os 
+ 
+ruta_carpetas    = '/Users/josue/Desktop/Respaldo WAZE' 
+nombres_carpetas = os.listdir(ruta_carpetas) 
+
+fecha = input("¿A que mes corresponde tu busqueda? ")
+dia_inicio = int(input("¿Cual seria la fecha de inicio? "))
+dia_final = int(input("¿Cual seria la fecha de fin? "))
+año = input("¿Cual es el año? ")
+formato_horas = input("¿Quieres alguna hora u horas en especifico? (si/no) ")
+filtro = input("¿Quieres filtrar por alguna columna? (si/no) ")
+
+hora_t = ['0500 = 0','0600 = 1','0700 = 2','0800 = 3','0900 = 4','1000 = 5','1100 = 6','1200 = 7','1300 = 8','1400 = 9','1500 = 10','1600 = 11','1700 = 12','1800 = 13','1900 = 14','2000 = 15','2100 = 16','2200 = 17','2300 = 18','2400 = 19']
+hora_bien = ['0500','0600','0700','0800','0900','1000','1100','1200','1300','1400','1500','1600','1700','1800','1900','2000','2100','2200','2300','2400']
+
+diferencia_dia = dia_final - dia_inicio
+lista_dias, split_1, split_2, nombres, lista_1 = [],[],[],[],[]
+
+for i in range(diferencia_dia+1):
+  lista_dias.append(str(dia_inicio + i))
+
+
+for i in range(len(nombres_carpetas)): 
+  y = nombres_carpetas[i].count(fecha) > 0
+  split_1,split_2 = nombres_carpetas[i].split(fecha),nombres_carpetas[i].split("_")
+  año_split = split_2[0].count(año)>0
+  dias = split_1[0] in lista_dias
+  
+  if (y == True) and (dias == True) and (año_split == True):
+    nombres.append(nombres_carpetas[i]) 
+    
+if formato_horas == 'si':
+  nombres_1 = nombres
+  nombres = []  
+  hora_1 = input("¿El filtro sera por hora o por horas? (hora/horas) ")
+  
+  if hora_1 == 'hora':
+    hora_1 = input("¿Cual seria la hora? (ej : 0800, 1100, etc.) ")
+    for i in range(len(nombres_1)):
+      split_2 = nombres_1[i].split("_")  
+      hora_split = split_2[1].count(hora_1) > 0
+      if hora_split == True:
+        nombres.append(nombres_1[i])
+        
+  elif hora_1 == 'horas':
+    for i in range(len(hora_t)):
+      print(hora_t[i])    
+    hora_1 = int(input ("De acuerdo a la lista mostrada, ¿qué número le corresponde a tu hora de inicio? "))
+    hora_2 = int(input ("Qué número le corresponde a tu hora final? "))
+    for i in range(hora_1,hora_2+1):
+      lista_1.append(hora_bien[i])
+    for i in range(len(nombres_1)):
+      split_1 = nombres_1[i].split("_") 
+      split_2 = split_1[1].split(".")
+      hora_split = split_2[0] in lista_1
+      if hora_split == True:
+        nombres.append(nombres_1[i])
+print(nombres)
