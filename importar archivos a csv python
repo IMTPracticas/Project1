@@ -1,0 +1,176 @@
+import pandas as pd
+import numpy as np
+import xml.etree.ElementTree as ET
+from datetime import datetime
+import pyodbc
+import sqlalchemy
+from sqlalchemy import create_engine
+import os 
+
+
+tag=['title','pubDate','{http://www.georss.org/georss}point',
+     '{http://www.linqmap.com}uuid','{http://www.linqmap.com}magvar','{http://www.linqmap.com}type',
+     '{http://www.linqmap.com}subtype','{http://www.linqmap.com}street','{http://www.linqmap.com}city',
+     '{http://www.linqmap.com}country','{http://www.linqmap.com}roadType','{http://www.linqmap.com}reportRating',
+     'confidence','{http://www.linqmap.com}reliability','{http://www.georss.org/georss}line',
+     '{http://www.linqmap.com}speed','{http://www.linqmap.com}length',
+     '{http://www.linqmap.com}delay','{http://www.linqmap.com}startNode','{http://www.linqmap.com}endNode',
+     '{http://www.linqmap.com}level','{http://www.linqmap.com}turnType','{http://www.linqmap.com}blockingAlertUuid',
+     'description','guid','link',
+     'author','{http://www.linqmap.com}id','detectionDate',
+     'detectionDateMillis','upDate','upDateMillis',
+     '{http://www.linqmap.com}regularSpeed','{http://www.linqmap.com}delaySeconds','{http://www.linqmap.com}seconds',
+     '{http://www.linqmap.com}trend','{http://www.linqmap.com}severity', '{http://www.linqmap.com}jamLevel',
+     '{http://www.linqmap.com}driversCount','{http://www.linqmap.com}alertsCount',
+     '{http://www.linqmap.com}nComments','{http://www.linqmap.com}nImages','{http://www.linqmap.com}nThumbsUp',
+     '{http://www.linqmap.com}highway','{http://www.linqmap.com}imageUrl','{http://www.linqmap.com}imageId'
+]
+pegar = []
+
+#Leemos el archivo xml
+c=0
+
+for archivo in range(len(nombres)):
+  document = ET.parse(nombres[archivo])
+  root = document.getroot()
+  items = root.findall('.//item')
+  split_1 = nombres[archivo].split("_")
+  split_2 = split_1[1].split(".")
+  
+  fechas = []
+  horas = []
+  for i in range(len(items)):
+    fechas.append(split_1[0])
+    horas.append(split_2[0])
+  
+  
+  
+#Creamos una lista con los valores de las horas para cada archivo 
+  guardado=[[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]]  
+  lista_1=[]
+  for a in range(46):
+    for j in range(len(items)):
+      for k in range(len(items[j])):
+        if items[j][k].tag == tag[a] :
+          lista_1.append(items[j][k].text)
+          break
+
+        else:
+          lista_1.append(np.nan)
+      guardado[a].append(lista_1[-1])
+
+
+    
+ 
+      
+  y_point , x_point = [] , []
+  guardado_point=guardado[2]
+  for i in range(len(guardado[1])):
+    if guardado_point[i] is not np.nan:
+      separacion = guardado_point[i].split()
+      y_point.append(float(separacion[0])),x_point.append(float(separacion[1]))    
+    else:
+      y_point.append(np.nan),x_point.append(np.nan)     
+ 
+  
+ 
+  y1_line , x1_line , y2_line , x2_line = [] , [] , [] , []
+  guardado_line=guardado[14]
+
+  for i in range(len(guardado_line)):
+    if guardado_line[i] is not np.nan:
+      separacion = guardado_line[i].split()
+      y1_line.append(float(separacion[0])),x1_line.append(float(separacion[1])),y2_line.append(float(separacion[2])),x2_line.append(float(separacion[3]))
+  
+    else:
+      y1_line.append(np.nan),x1_line.append(np.nan),y2_line.append(np.nan),x2_line.append(np.nan)
+     
+  
+#Creamos el df con sus columnas respectivas y su dimension    
+  df = pd.DataFrame(columns=['dia_t','hora_t','title2','pubDate_fecha','pubDate_hora','uuid',
+                             'magvar','type','subtype','country','reportRating',
+                             'confidence','reliability', 'street','roadType','city',
+                             'speed','length','delay','startNode','endNode',
+                             'level','turnType','blockingAlertUuid','description','guid',
+                             'link','author','id','detectionDate','detectionDateMillis',
+                             'updateDate','updateDateMillis','regularSpeed','delaySeconds','seconds',
+                             'trend','severity','jamLevel','driversCount','alertsCount',
+                             'nComments','nImages','nThumbsUp','highway','xy_point',
+                             'x_point','y_point','xy_line','y1_line','x1_line',
+                             'y2_line','x2_line','causeType','imageId','imageUrl'
+                             ],index=range(1,len(items)+1))
+
+#Para la columna fecha buscamos la fecha del dia de hoy y se la pegamos a toda la columna  
+  df['dia_t'] = fechas
+  df['hora_t'] = horas
+  df['title2'] = guardado[0]
+  df['pubDate_fecha'] = guardado[1]
+  df['xy_point'] = guardado[2]
+  df['uuid'] = guardado[3]
+  df['magvar'] = guardado[4]
+  df['type'] = guardado[5]
+  df['subtype'] = guardado[6]
+  df['street'] = guardado[7]
+  df['city'] = guardado[8]
+  df['country'] = guardado[9]
+  df['roadType'] = guardado[10]
+  df['reportRating'] = guardado[11]
+  df['confidence'] = guardado[12]
+  df['reliability'] = guardado[13]
+  df['xy_line'] = guardado[14]
+  df['speed'] = guardado[15]
+  df['length'] = guardado[16]
+  df['delay'] = guardado[17]
+  df['startNode'] = guardado[18]
+  df['endNode']=guardado[19]
+  df['level']=guardado[20]
+  df['turnType']=guardado[21]
+  df['blockingAlertUuid']=guardado[22]
+  df['description']=guardado[23]
+  df['guid']=guardado[24]
+  df['link']=guardado[25]
+  df['author']=guardado[26]
+  df['id']=guardado[27]
+  df['detectionDate']=guardado[28]
+  df['detectionDateMillis']=guardado[29]
+  df['updateDate']=guardado[30]
+  df['updateDateMillis']=guardado[31]
+  df['regularSpeed']=guardado[32]
+  df['delaySeconds']=guardado[33]
+  df['seconds']=guardado[34]
+  df['trend']=guardado[35]
+  df['severity']=guardado[36]
+  df['jamLevel']=guardado[37]
+  df['driversCount']=guardado[38]
+  df['alertsCount']=guardado[39]
+  df['nComments']=guardado[40]
+  df['nImages']=guardado[41]
+  df['nThumbsUp']=guardado[42]
+  df['highway']=guardado[43]
+  df['y_point']=y_point
+  df['x_point']=x_point
+  df['y1_line']=y1_line
+  df['x1_line']=x1_line
+  df['y2_line']=y2_line
+  df['x2_line']=x2_line
+  df['imageId']=guardado[44]
+  df['imageUrl']=guardado[45]
+#Aqui vamos pegando todos los df  
+  pegar.append(df)
+
+#Podemos concatenar una lista entera de df y asi mostrarnos solo una tabla  
+concatenar = pd.concat(pegar,axis=0)
+
+
+concatenar = concatenar.drop_duplicates()
+
+
+#concatenar.drop(concatenar[(concatenar['country'] != 'MX')].index,inplace=True)
+
+
+#engine=sqlalchemy.create_engine('mysql+pymysql://root:kxie7d9idk3m@34.121.123.87/imt_1')
+#concatenar.to_sql('tabla_1',con=engine,if_exists='replace',index=False)
+
+
+
+#concatenar.to_excel(r'C:\Users\redim\Desktop\18_marzo\Libro.xlsx',index = False, header=True)
